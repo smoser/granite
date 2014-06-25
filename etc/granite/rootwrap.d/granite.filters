@@ -1,0 +1,6 @@
+# nova-rootwrap filters for compute nodes running granite
+# This file should be owned by (and only-writable by) the root user
+
+# granite/virt/lxc/containers.py:
+lxc-start: CommandFilter, lxc-start, root
+lxc-destroy: CommandFilter, lxc-destroy, root
