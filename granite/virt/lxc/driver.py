@@ -28,7 +28,8 @@ import contextlib
 from oslo.config import cfg
 import lxc
 
-from nova.virt.lxc import containers
+from granite.virt.lxc import containers
+from granite.virt.lxc import hostops
 
 from nova.compute import power_state
 from nova.compute import task_states
@@ -114,6 +115,7 @@ class LXCDriver(driver.ComputeDriver):
         if not _FAKE_NODES:
             set_nodes([CONF.host])
         self.containers = containers.Containers()
+        self.hostops = hostops.HostOps()
 
     def init_host(self, host):
         if not lxc.version:
