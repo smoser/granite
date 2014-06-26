@@ -74,25 +74,7 @@ def restore_nodes():
     _FAKE_NODES = [CONF.host]
 
 
-class FakeInstance(object):
-
-    def __init__(self, name, state, uuid):
-        self.name = name
-        self.state = state
-        self.uuid = uuid
-
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-
 class LXCDriver(driver.ComputeDriver):
-    capabilities = {
-        "has_imagecache": True,
-        "supports_recreate": True,
-        }
-
-    """Fake hypervisor driver."""
-
     def __init__(self, virtapi, read_only=False):
         super(LXCDriver, self).__init__(virtapi)
         self.instances = {}
@@ -110,10 +92,6 @@ class LXCDriver(driver.ComputeDriver):
           'disk_available_least': 500000000000,
           'supported_instances': [(None, 'fake', None)],
           }
-        self._mounts = {}
-        self._interfaces = {}
-        if not _FAKE_NODES:
-            set_nodes([CONF.host])
         self.containers = containers.Containers()
         self.hostops = hostops.HostOps()
 
@@ -130,17 +108,11 @@ class LXCDriver(driver.ComputeDriver):
                               admin_password, network_info, block_device_info)
 
     def snapshot(self, context, instance, name, update_task_state):
-        if instance['name'] not in self.instances:
-            raise exception.InstanceNotRunning(instance_id=instance['uuid'])
-        update_task_state(task_state=task_states.IMAGE_UPLOADING)
+        pass
 
     def reboot(self, context, instance, network_info, reboot_type,
                block_device_info=None, bad_volumes_callback=None):
         pass
-
-    @staticmethod
-    def get_host_ip_addr():
-        return '192.168.0.1'
 
     def rescue(self, context, instance, network_info, image_meta,
                rescue_password):
@@ -169,31 +141,18 @@ class LXCDriver(driver.ComputeDriver):
     def attach_volume(self, context, connection_info, instance, mountpoint,
                       disk_bus=None, device_type=None, encryption=None):
         """Attach the disk to the instance at mountpoint using info."""
-        instance_name = instance['name']
-        if instance_name not in self._mounts:
-            self._mounts[instance_name] = {}
-        self._mounts[instance_name][mountpoint] = connection_info
-        return True
+        pass
 
     def detach_volume(self, connection_info, instance, mountpoint,
                       encryption=None):
         """Detach the disk attached to the instance."""
-        try:
-            del self._mounts[instance['name']][mountpoint]
-        except KeyError:
-            pass
-        return True
+        pass
 
     def attach_interface(self, instance, image_meta, vif):
-        if vif['id'] in self._interfaces:
-            raise exception.InterfaceAttachFailed('duplicate')
-        self._interfaces[vif['id']] = vif
+        pass
 
     def detach_interface(self, instance, vif):
-        try:
-            del self._interfaces[vif['id']]
-        except KeyError:
-            raise exception.InterfaceDetachFailed('not attached')
+        pass
 
     def get_info(self, instance):
         state = self.containers.container_exists(instance)
