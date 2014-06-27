@@ -16,6 +16,7 @@ import os
 
 from oslo.config import cfg
 import lxc
+import psutil
 
 from nova.openstack.common.gettextutils import _   # noqa
 from nova.openstack.common import jsonutils
@@ -36,16 +37,15 @@ def get_memory_info():
         if 'MemFree:' == line.split()[0]:
             split = line.split()
             free  = float(split[1])
-         if 'Buffers:' == line.split()[0]:
+        if 'Buffers:' == line.split()[0]:
             split = line.split()
             buffers = float(split[1])
-         if 'Cached:' == line.split()[0]:
+        if 'Cached:' == line.split()[0]:
             split = line.split()
             cached = float(split[1])
-    close('/proc/meminfo')
-    used = (total - (free + buffers + cached)
-    return {'total': int(total/1024)
-            'free': int(free/1024)
+    used = (total - (free + buffers + cached))
+    return {'total': int(total/1024),
+            'free': int(free/1024),
             'used': int(used/1024)}
 
 def get_disk_info():
@@ -54,3 +54,9 @@ def get_disk_info():
     free = hddinfo.f_frsize * hddinfo.f_bavail
     used = hddinfo.f_frsize * (hddinfo.f_blocks - hddinfo.f_bfree)
     return {'total': total, 'free': free, 'used': used}
+
+def get_cpu_count():
+    try:
+        return psutil.NUM_CPUS
+    except (ImportError, AttributeError):
+        return 1

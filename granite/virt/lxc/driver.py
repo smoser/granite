@@ -51,28 +51,6 @@ LOG = logging.getLogger(__name__)
 _FAKE_NODES = None
 
 
-def set_nodes(nodes):
-    """Sets LXCDriver's node.list.
-
-    It has effect on the following methods:
-        get_available_nodes()
-        get_available_resource
-        get_host_stats()
-
-    To restore the change, call restore_nodes()
-    """
-    global _FAKE_NODES
-    _FAKE_NODES = nodes
-
-
-def restore_nodes():
-    """Resets LXCDriver's node list modified by set_nodes().
-
-    Usually called from tearDown().
-    """
-    global _FAKE_NODES
-    _FAKE_NODES = [CONF.host]
-
 
 class LXCDriver(driver.ComputeDriver):
     def __init__(self, virtapi, read_only=False):
@@ -172,41 +150,7 @@ class LXCDriver(driver.ComputeDriver):
         return 'FAKE CONSOLE OUTPUT\nANOTHER\nLAST LINE'
 
     def get_available_resource(self, nodename):
-        """Updates compute manager resource info on ComputeNode table.
-
-           Since we don't have a real hypervisor, pretend we have lots of
-           disk and ram.
-        """
-        if nodename not in _FAKE_NODES:
-            return {}
-
-        dic = {'vcpus': 1,
-               'memory_mb': 8192,
-               'local_gb': 1028,
-               'vcpus_used': 0,
-               'memory_mb_used': 0,
-               'local_gb_used': 0,
-               'hypervisor_type': 'fake',
-               'hypervisor_version': '1.0',
-               'hypervisor_hostname': nodename,
-               'disk_available_least': 0,
-               'cpu_info': '?',
-               'supported_instances': jsonutils.dumps([(None, 'fake', None)])
-              }
-        return dic
+        return self.hostops.get_available_resource(nodename)
 
     def get_host_stats(self, refresh=False):
-        """Return fake Host Status of ram, disk, network."""
-        stats = []
-        for nodename in _FAKE_NODES:
-            host_status = self.host_status_base.copy()
-            host_status['hypervisor_hostname'] = nodename
-            host_status['host_hostname'] = nodename
-            host_status['host_name_label'] = nodename
-            stats.append(host_status)
-        if len(stats) == 0:
-            raise exception.NovaException("LXCDriver has no node")
-        elif len(stats) == 1:
-            return stats[0]
-        else:
-            return stats
+        return self.hostops.get_host_stats(refresh)

@@ -31,24 +31,26 @@ log = logging.getLogger(__name__)
 
 class HostOps(object):
     def __init__(self):
-        selt._stats = None
+        self._stats = None
 
     def get_host_stats(self, refresh=False):
         if refresh or self._stats is None:
             self._update_status()
-        return self._status
+        return self._stats
 
     def get_available_resource(self, nodename):
-        dic = {'vcpus': 1,
-               'memory_mb': 8192,
-               'local_gb': 1028,
+        memory = host_utils.get_memory_info()
+        disk = host_utils.get_disk_info()
+
+        dic = {'vcpus': host_utils.get_cpu_count(),
+               'memory_mb': memory['total'],
+               'local_gb': disk['total'] / units.Gi,
                'vcpus_used': 0,
-               'memory_mb_used': 0,
-               'local_gb_used': 0,
+               'memory_mb_used': memory['used'],
+               'local_gb_used': disk['used'] / units.Gi,
                'hypervisor_type': 'lxc',
                'hypervisor_verison': utils.convert_version_to_string(lxc.version),
-               'hypervisor_hostname' CONF.host,
-               'disk_available_least': 0,
+               'hypervisor_hostname': CONF.host,
                'cpu_info': '?',
                'supported_instances': jsonutils.dumps([
                                      ('i686', 'lxc', 'lxc'),
@@ -57,4 +59,23 @@ class HostOps(object):
         return dic
 
     def _update_status(self):
-        pass
+        memory = host_utils.get_memory_info()
+        disk = host_utils.get_disk_info()
+
+        dic = {'vcpus': host_utils.get_cpu_count(),
+               'memory_mb': memory['total'],
+               'local_gb': disk['total'] / units.Gi,
+               'vcpus_used': 0,
+               'memory_mb_used': memory['used'],
+               'local_gb_used': disk['used'] / units.Gi,
+               'hypervisor_type': 'lxc',
+               'hypervisor_verison': utils.convert_version_to_string(lxc.version),
+               'hypervisor_hostname': CONF.host,
+               'cpu_info': '?',
+               'supported_instances': jsonutils.dumps([
+                                      ('i686', 'lxc', 'lxc'),
+                                      ('x86_64', 'lxc', 'lxc'),
+                                      ])
+
+        self._stats = dic
+        return self._stats
