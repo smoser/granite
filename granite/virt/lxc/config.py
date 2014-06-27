@@ -101,4 +101,4 @@ class LXCConfig(object):
 
     def config_lxc_logging(self):
         self.container.append_config_item('lxc.logfile', os.path.join(self.instance_dir,
-                                                            'console.log'))
+                                                            'console.logfile'))
