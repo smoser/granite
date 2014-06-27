@@ -49,13 +49,13 @@ class HostOps(object):
                'memory_mb_used': memory['used'],
                'local_gb_used': disk['used'] / units.Gi,
                'hypervisor_type': 'lxc',
-               'hypervisor_verison': utils.convert_version_to_string(lxc.version),
+               'hypervisor_verison': utils.convert_version_to_int(lxc.version),
                'hypervisor_hostname': CONF.host,
                'cpu_info': '?',
                'supported_instances': jsonutils.dumps([
                                      ('i686', 'lxc', 'lxc'),
                                      ('x86_64', 'lxc', 'lxc'),
-                                     ])
+                                     ])}
         return dic
 
     def _update_status(self):
@@ -69,13 +69,13 @@ class HostOps(object):
                'memory_mb_used': memory['used'],
                'local_gb_used': disk['used'] / units.Gi,
                'hypervisor_type': 'lxc',
-               'hypervisor_verison': utils.convert_version_to_string(lxc.version),
+               'hypervisor_verison': utils.convert_version_to_int(lxc.version),
                'hypervisor_hostname': CONF.host,
                'cpu_info': '?',
                'supported_instances': jsonutils.dumps([
                                       ('i686', 'lxc', 'lxc'),
                                       ('x86_64', 'lxc', 'lxc'),
-                                      ])
+                                      ])}
 
         self._stats = dic
         return self._stats
