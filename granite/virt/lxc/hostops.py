@@ -39,24 +39,7 @@ class HostOps(object):
         return self._stats
 
     def get_available_resource(self, nodename):
-        memory = host_utils.get_memory_info()
-        disk = host_utils.get_disk_info()
-
-        dic = {'vcpus': host_utils.get_cpu_count(),
-               'memory_mb': memory['total'],
-               'local_gb': disk['total'] / units.Gi,
-               'vcpus_used': 0,
-               'memory_mb_used': memory['used'],
-               'local_gb_used': disk['used'] / units.Gi,
-               'hypervisor_type': 'lxc',
-               'hypervisor_verison': utils.convert_version_to_int(lxc.version),
-               'hypervisor_hostname': CONF.host,
-               'cpu_info': '?',
-               'supported_instances': jsonutils.dumps([
-                                     ('i686', 'lxc', 'lxc'),
-                                     ('x86_64', 'lxc', 'lxc'),
-                                     ])}
-        return dic
+        return self._update_status()
 
     def _update_status(self):
         memory = host_utils.get_memory_info()
@@ -69,7 +52,7 @@ class HostOps(object):
                'memory_mb_used': memory['used'],
                'local_gb_used': disk['used'] / units.Gi,
                'hypervisor_type': 'lxc',
-               'hypervisor_verison': utils.convert_version_to_int(lxc.version),
+               'hypervisor_version': utils.convert_version_to_int(lxc.version),
                'hypervisor_hostname': CONF.host,
                'cpu_info': '?',
                'supported_instances': jsonutils.dumps([
