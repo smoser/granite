@@ -20,6 +20,7 @@ import lxc
 from oslo.config import cfg
 
 from granite.virt.lxc import config
+from granite.virt.lxc import imagebackend
 from granite.virt.lxc import vifs
 
 from nova.openstack.common import fileutils
@@ -41,6 +42,12 @@ lxc_opts = [
     cfg.StrOpt('lxc_config_dir',
                 default='/usr/share/lxc/config',
                 help='Default lxc config dir'),
+    cfg.StrOpt('lxc_subuid',
+                default='100000',
+                help='Default lxc sub uid'),
+    cfg.StrOpt('lxc_subgid',
+                default='100000',
+                help='Default lxc sub gid'),
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
                help='Default vif driver'),
@@ -49,12 +56,14 @@ lxc_opts = [
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
+CONF.import_opt('use_cow_images', 'nova.virt.driver')
 CONF.register_opts(lxc_opts, 'lxc')
 
 class Containers(object):
     def __init__(self):
         self.instance_path = None
-        self.image_path = None
+        self.container_rootfs = None
+        self.imagebackend = imagebackend.ImageBackend()
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info, block_device_info=None):
@@ -62,22 +71,16 @@ class Containers(object):
 
         try:
             self.instance_path = os.path.join(CONF.instances_path, instance['uuid'])
+            self.container_rootfs = os.phat.join(self.instance_path, 'rootfs')
             fileutils.ensure_tree(self.instance_path)
             self.config_file = os.path.join(self.instance_path, 'config')
-
-            def _fetch_image():
-                LOG.debug('Fetching image from glance')
-                self.image_path = os.path.join(self.instance_path, 'disk')
-                images.fetch(context, instance['image_ref'], self.image_path,
-                            instance['user_id'], instance['project_id'])
-
-            _fetch_image()
 
             container = lxc.Container(instance['uuid'])
             container.set_config_path(CONF.instances_path)
 
+            self.container_rootfs = self.imagebackend.create_image(context, instance)
             cfg = config.LXCConfig(container, instance, image_meta, network_info,
-                                   self.instance_path, self.image_path, self.config_file)
+                                   self.instance_path, self.container_rootfs, self.config_file)
             cfg.get_config()
 
             def _start_container():
@@ -85,8 +88,7 @@ class Containers(object):
                 if not container.defined:
                     raise Exception(_('LXC container is not defined'))
 
-                utils.execute('lxc-start', '-d', '-f',  self.config_file,
-                              '-o', '/tmp/out', '-l', 'ERROR', '--name', instance['uuid'], run_as_root=True)
+                container.start()
 
             _start_container()
         except Exception as ex:

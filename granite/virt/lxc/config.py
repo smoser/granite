@@ -33,7 +33,7 @@ CONF = cfg.CONF
 
 class LXCConfig(object):
     def __init__(self, container, instance, image_meta, network_info,
-                instance_dir, image_path, config_file):
+                instance_dir, container_rootfs, config_file):
         self.container = container
         self.instance = instance
         self.image_meta = image_meta
@@ -41,6 +41,7 @@ class LXCConfig(object):
         self.instance_dir = instance_dir
         self.image_path = image_path
         self.config_file = config_file
+        self.container_rootfs = container_rootfs
 
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
@@ -57,6 +58,7 @@ class LXCConfig(object):
             self.config_lxc_rootfs()
             self.config_lxc_console()
             self.config_lxc_network()
+            self.config_lxc_user()
             self.config_lxc_logging()
             self.container.save_config()
 
@@ -85,7 +87,7 @@ class LXCConfig(object):
         self.container.append_config_item('lxc.utsname', self.instance['uuid'])
 
     def config_lxc_rootfs(self):
-        self.container.append_config_item('lxc.rootfs', 'nbd:%s:1' % self.image_path)
+        self.container.append_config_item('lxc.rootfs', self.container_rootfs)
 
     def config_lxc_console(self):
         self.container.append_config_item('lxc.console', os.path.join(self.instance_dir,
@@ -102,3 +104,7 @@ class LXCConfig(object):
     def config_lxc_logging(self):
         self.container.append_config_item('lxc.logfile', os.path.join(self.instance_dir,
                                                             'console.logfile'))
+
+    def config_lxc_user(self):
+        self.container.append_config_item('lxc.id_map', 'u 0 %s 65536' % (CONF.lxc.lxc_subuid))
+        self.container.append_config_item('lxc.id_map', 'g 0 %s 65536' % (CONF.lxc.lxc_subgid))
