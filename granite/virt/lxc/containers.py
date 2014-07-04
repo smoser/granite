@@ -71,7 +71,7 @@ class Containers(object):
 
         try:
             self.instance_path = os.path.join(CONF.instances_path, instance['uuid'])
-            self.container_rootfs = os.phat.join(self.instance_path, 'rootfs')
+            self.container_rootfs = os.path.join(self.instance_path, 'rootfs')
             fileutils.ensure_tree(self.instance_path)
             self.config_file = os.path.join(self.instance_path, 'config')
 

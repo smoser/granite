@@ -45,6 +45,7 @@ class ImageBackend(object):
                       run_as_root=True)
         utils.execute('chown', '-R', '%s:%s' % (CONF.lxc.lxc_subuid, CONF.lxc.lxc_subgid),
                       container_rootfs, run_as_root=True)
+        disk.teardown_container(container_dir=tmpfolder)
         os.rmdir(tmpfolder)
 
         return container_rootfs
