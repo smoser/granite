@@ -16,10 +16,7 @@
 #    under the License.
 
 """
-A fake (in-memory) hypervisor+api.
-
-Allows nova testing w/o a hypervisor.  This module also documents the
-semantics of real hypervisor connections.
+native-lxc driver
 
 """
 
@@ -47,29 +44,9 @@ CONF.import_opt('host', 'nova.netconf')
 
 LOG = logging.getLogger(__name__)
 
-
-_FAKE_NODES = None
-
-
-
 class LXCDriver(driver.ComputeDriver):
     def __init__(self, virtapi, read_only=False):
         super(LXCDriver, self).__init__(virtapi)
-        self.instances = {}
-        self.host_status_base = {
-          'vcpus': 100000,
-          'memory_mb': 8000000000,
-          'local_gb': 600000000000,
-          'vcpus_used': 0,
-          'memory_mb_used': 0,
-          'local_gb_used': 100000000000,
-          'hypervisor_type': 'fake',
-          'hypervisor_version': utils.convert_version_to_int('1.0'),
-          'hypervisor_hostname': CONF.host,
-          'cpu_info': {},
-          'disk_available_least': 500000000000,
-          'supported_instances': [(None, 'fake', None)],
-          }
         self.containers = containers.Containers()
         self.hostops = hostops.HostOps()
 
