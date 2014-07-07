@@ -102,6 +102,42 @@ class Containers(object):
         if container.defined and container.controllable:
             container.destroy()
 
+    def reboot_container(self, context, instance, network_info, block_device_info,
+                         bad_volumes_callback):
+        LOG.debug('Rebooting container')
+        container = lxc.Container(instance['uuid'])
+        container.set_config_path(CONF.instances_path)
+        if container.defined and container.controllable:
+            container.reboot()
+
+    def stop_container(self, context, instance):
+        LOG.debug('Stopping container')
+        container = lxc.Container(instance['uuid'])
+        container.set_config_path(CONF.instances_path)
+        if container.defined and container.controllable:
+            container.stop()
+
+    def shutdown_container(self, instnace, network_info, block_device_info):
+        LOG.debug('Shutdown container')
+        container = lxc.Container(instance['uuid'])
+        container.set_config_path(CONF.instances_path)
+        if container.defined and container.controllable:
+            container.shutdown()
+
+    def suspend_container(self. instance):
+        LOG.debug('Suspend container')
+        container = lxc.Container(instance['uuid'])
+        container.set_config_path(CONF.instances_path)
+        if container.defined and container.controllable:
+            container.freeze()
+
+    def resume_container(self, context, instance, network_info, block_device_info):
+        LOG.debug('Suspend container')
+        container = lxc.Container(instance['uuid'])
+        container.set_config_path(CONF.instances_path)
+        if container.defined and container.controllable:
+            container.unfreeze()
+        
     def container_exists(self, instance):
         container = lxc.Container(instance['uuid'])
         container.set_config_path(CONF.instances_path)
