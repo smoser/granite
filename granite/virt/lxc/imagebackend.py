@@ -24,7 +24,7 @@ class ImageBackend(object):
     def create_image(self, context, instance):
         base_dir = os.path.join(CONF.instances_path,
                                 CONF.image_cache_subdirectory_name)
-        if not os.oath.exists(base_dir):
+        if not os.path.exists(base_dir):
             fileutils.ensure_tree(base_dir)
         filename = instance['image_ref']
         base = os.path.join(base_dir, filename)
