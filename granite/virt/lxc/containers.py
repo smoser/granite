@@ -98,10 +98,9 @@ class Containers(object):
                           block_device_info, destroy_disks):
         LOG.debug('Destroying container')
         container = lxc.Container(instance['uuid'])
-        if container.defined:
-            utils.execute('lxc-destroy', '-n', instance['uuid'],
-                          run_as_root=True)
-            shutil.rmtree(self.instance_path)
+        container.set_config_path(CONF.instances_path)
+        if container.defined and container.controllable:
+            container.destroy()
 
     def container_exists(self, instance):
         container = lxc.Container(instance['uuid'])
