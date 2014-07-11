@@ -55,7 +55,7 @@ class LXCDriver(driver.ComputeDriver):
             raise Exception('LXC is not installed')
 
     def list_instances(self):
-        return lxc.list_containers()
+        return lxc.list_containers(config_path=CONF.instances_path)
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info=None, block_device_info=None):
@@ -67,8 +67,9 @@ class LXCDriver(driver.ComputeDriver):
 
     def reboot(self, context, instance, network_info, reboot_type,
                block_device_info=None, bad_volumes_callback=None):
-        self.container.reboot_contianer(context, instance, network_info,
-                        reboot_type, block_device_info, bad_volumes_callback)
+        self.containers.reboot_container(context, instance, network_info, reboot_type, 
+                        block_device_info, bad_volumes_callback)
+                    
 
     def rescue(self, context, instance, network_info, image_meta,
                rescue_password):

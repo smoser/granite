@@ -18,6 +18,8 @@ import lxc
 
 from oslo.config import cfg
 
+from granite.virt.lxc import utils as container_utils
+
 from nova.openstack.common import fileutils
 from nova.openstack.common.gettextutils import _ # noqa
 from nova.openstack.common import importutils
@@ -32,16 +34,11 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 class LXCConfig(object):
-    def __init__(self, container, instance, image_meta, network_info,
-                instance_dir, container_rootfs, config_file):
+    def __init__(self, container, instance, image_meta, network_info):
         self.container = container
         self.instance = instance
         self.image_meta = image_meta
         self.network_info = network_info
-        self.instance_dir = instance_dir
-        self.image_path = image_path
-        self.config_file = config_file
-        self.container_rootfs = container_rootfs
 
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
@@ -56,7 +53,7 @@ class LXCConfig(object):
             self.container.load_config()
             self.config_lxc_name()
             self.config_lxc_rootfs()
-            self.config_lxc_console()
+        #    self.config_lxc_console()
             self.config_lxc_network()
             self.config_lxc_user()
             self.config_lxc_logging()
@@ -78,33 +75,39 @@ class LXCConfig(object):
             return lxc_template
 
     def _write_lxc_template(self, template_name):
-        f = open(self.config_file, 'w')
-        f.write('lxc.include = %s/%s.common.conf' % (CONF.lxc.lxc_config_dir,
+        config_file = container_utils.get_container_config(self.instance)
+        f = open(config_file, 'w')
+        f.write('lxc.include = %s/%s.common.conf\n' % (CONF.lxc.lxc_config_dir,
+                                                     template_name))
+        f.write('lxc.include = %s/%s.userns.conf\n' % (CONF.lxc.lxc_config_dir,
                                                      template_name))
         f.close()
 
     def config_lxc_name(self):
-        self.container.append_config_item('lxc.utsname', self.instance['uuid'])
+        if self.instance:
+            self.container.append_config_item('lxc.utsname', self.instance['uuid'])
 
     def config_lxc_rootfs(self):
-        self.container.append_config_item('lxc.rootfs', self.container_rootfs)
+        container_rootfs = container_utils.get_container_rootfs(self.instance)
+        if os.path.exists(container_rootfs):
+            self.container.append_config_item('lxc.rootfs', container_rootfs)
 
     def config_lxc_console(self):
-        self.container.append_config_item('lxc.console', os.path.join(self.instance_dir,
-                                                            'console.log'))
+        self.container.append_config_item('lxc.console', container_utils.get_container_console(self.instance))
 
     def config_lxc_network(self):
         self.container.append_config_item('lxc.network.type', 'veth')
         self.container.append_config_item('lxc.network.flags', 'up')
 
         vif_info = self.vif_driver.plug(self.instance, self.network_info)
+
         self.container.append_config_item('lxc.network.link', vif_info['bridge'])
         self.container.append_config_item('lxc.network.hwaddr', vif_info['mac'])
 
     def config_lxc_logging(self):
-        self.container.append_config_item('lxc.logfile', os.path.join(self.instance_dir,
-                                                            'console.logfile'))
+        self.container.append_config_item('lxc.logfile', container_utils.get_container_logfile(self.instance))
 
     def config_lxc_user(self):
-        self.container.append_config_item('lxc.id_map', 'u 0 %s 65536' % (CONF.lxc.lxc_subuid))
-        self.container.append_config_item('lxc.id_map', 'g 0 %s 65536' % (CONF.lxc.lxc_subgid))
+        id_map = container_utils.parse_idmap(CONF.lxc.lxc_subuid)
+        self.container.append_config_item('lxc.id_map', 'u 0 %s %s' % (id_map[1], id_map[2]))
+        self.container.append_config_item('lxc.id_map', 'g 0 %s %s' % (id_map[1], id_map[2]))

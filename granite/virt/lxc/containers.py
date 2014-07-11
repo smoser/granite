@@ -20,7 +20,8 @@ import lxc
 from oslo.config import cfg
 
 from granite.virt.lxc import config
-from granite.virt.lxc import imagebackend
+from granite.virt.lxc import images
+from granite.virt.lxc import utils as container_utils
 from granite.virt.lxc import vifs
 
 from nova.openstack.common import fileutils
@@ -30,7 +31,6 @@ from nova.openstack.common import log as logging
 from nova import exception
 from nova import utils
 from nova.virt.disk import api as disk
-from nova.virt import images
 
 lxc_opts = [
     cfg.StrOpt('lxc_default_template',
@@ -43,10 +43,10 @@ lxc_opts = [
                 default='/usr/share/lxc/config',
                 help='Default lxc config dir'),
     cfg.StrOpt('lxc_subuid',
-                default='100000',
+                default='1000:100000:65536',
                 help='Default lxc sub uid'),
     cfg.StrOpt('lxc_subgid',
-                default='100000',
+                default='1000:100000:65536',
                 help='Default lxc sub gid'),
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
@@ -63,52 +63,63 @@ class Containers(object):
     def __init__(self):
         self.instance_path = None
         self.container_rootfs = None
-        self.imagebackend = imagebackend.ImageBackend()
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info, block_device_info=None):
+        """ Creates a LXC container instance
+            Steps that are followed:
+
+        1. Create a container
+        2. Fetches the image from glance
+        3. Untars the image from glance
+        4. Start the container
+        """
         LOG.debug('Spawning containers')
 
-        try:
-            self.instance_path = os.path.join(CONF.instances_path, instance['uuid'])
-            self.container_rootfs = os.path.join(self.instance_path, 'rootfs')
-            fileutils.ensure_tree(self.instance_path)
-            self.config_file = os.path.join(self.instance_path, 'config')
+        # Check for a vlid image:
+        file_type = container_utils.get_disk_format(image_meta)
+        if file_type == 'root-tar':
+            container_image = '%s.tar.gz' % instance['image_ref']
 
-            container = lxc.Container(instance['uuid'])
-            container.set_config_path(CONF.instances_path)
+        # Setup the LXC instance
+        instance_name = instance['uuid']
+        container = lxc.Container(instance_name)
+        container.set_config_path(CONF.instances_path)
 
-            self.container_rootfs = self.imagebackend.create_image(context, instance)
-            cfg = config.LXCConfig(container, instance, image_meta, network_info,
-                                   self.instance_path, self.container_rootfs, self.config_file)
-            cfg.get_config()
+        # Create the LXC container from the image
+        images.fetch_image(context, instance, image_meta, container_image)
+        images.create_container(instance)
 
-            def _start_container():
-                LOG.debug(_('Starting container'))
-                if not container.defined:
-                    raise Exception(_('LXC container is not defined'))
+        # Write the LXC confgiuration file
+        cfg = config.LXCConfig(container, instance, image_meta, network_info)
+        cfg.get_config()
 
-                container.start()
+        images.setup_container(instance, container_image)
+        # Startint the container
+        if not container.running:
+            if container.start():
+                LOG.info(_('Container started'))
 
-            _start_container()
-        except Exception as ex:
-            LOG.exception(ex)
 
     def destroy_container(self, context, instance, network_info,
                           block_device_info, destroy_disks):
         LOG.debug('Destroying container')
         container = lxc.Container(instance['uuid'])
         container.set_config_path(CONF.instances_path)
-        if container.defined and container.controllable:
-            container.destroy()
+        if container.running:
+            container.stop()
+            # segfault work around
+            utils.execute('lxc-destroy', '-n', instance['uuid'], '-P', 
+                            CONF.instances_path)
 
-    def reboot_container(self, context, instance, network_info, block_device_info,
+    def reboot_container(self, context, instance, network_info, reboot_type, block_device_info,
                          bad_volumes_callback):
         LOG.debug('Rebooting container')
         container = lxc.Container(instance['uuid'])
         container.set_config_path(CONF.instances_path)
-        if container.defined and container.controllable:
-            container.reboot()
+        if container.running:
+            if container.reboot():
+                LOG.info(_('Container rebooted'))
 
     def stop_container(self, context, instance):
         LOG.debug('Stopping container')
@@ -124,7 +135,7 @@ class Containers(object):
         if container.defined and container.controllable:
             container.shutdown()
 
-    def suspend_container(self. instance):
+    def suspend_container(self, instance):
         LOG.debug('Suspend container')
         container = lxc.Container(instance['uuid'])
         container.set_config_path(CONF.instances_path)
