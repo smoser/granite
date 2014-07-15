@@ -45,7 +45,7 @@ class LXCISCSIDriver(VolumeDriver):
         super(LXCISCSIDriver, self).__init__(virtapi)
     
     def attach_volume(self, connection_info, instance, mountpoint):
-        pass
+        LOG.info(_('attach volume'))
 
     def detach_volume(self, connection_info, instance, mountpoint):
-        pass
+        LOG.info(_('detach volume'))
