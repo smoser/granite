@@ -51,6 +51,9 @@ lxc_opts = [
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
                help='Default vif driver'),
+    cfg.StrOpt('volume_driver',
+                default='granite.virt.lxc.volumes.LXCISCSIDriver',
+                help='Default volume driver').
 ]
 
 LOG = logging.getLogger(__name__)
@@ -63,8 +66,11 @@ class Containers(object):
     def __init__(self):
         self.instance_path = None
         self.container_rootfs = None
+        
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
+
+        self.volume_driver = importutils.import_class(CONF.lxc.volume_driver)
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info, block_device_info=None):
@@ -140,7 +146,6 @@ class Containers(object):
         if container.start():
             LOG.info(_('Container started'))
         
-
     def shutdown_container(self, instnace, network_info, block_device_info):
         LOG.debug('Shutdown container')
         container = lxc.Container(instance['uuid'])
@@ -177,6 +182,15 @@ class Containers(object):
             for vif in network_info:
                 self.vif_driver.plug(instance, vif)
 
+    def attach_container_volume(self, context, connection_info, instance, mountpoint,
+                      disk_bus=None, device_type=None, encryption=None):
+        pass
+
+    def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
+        pass
+
+    def get_volume_connector(self, instance):
+        return self.volume_driver.get_volume_connector(instance)
         
     def container_exists(self, instance):
         container = lxc.Container(instance['uuid'])

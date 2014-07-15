@@ -27,6 +27,7 @@ import lxc
 
 from granite.virt.lxc import containers
 from granite.virt.lxc import hostops
+from granite.virt.lxc impot volumes
 
 from nova.compute import power_state
 from nova.compute import task_states
@@ -38,9 +39,11 @@ from nova.openstack.common import log as logging
 from nova import utils
 from nova.virt import driver
 from nova.virt import virtapi
+from nova.virt import volumeutils
 
 CONF = cfg.CONF
 CONF.import_opt('host', 'nova.netconf')
+CONF.import_opt('my_ip', 'nova.netconf')
 
 LOG = logging.getLogger(__name__)
 
@@ -49,6 +52,7 @@ class LXCDriver(driver.ComputeDriver):
         super(LXCDriver, self).__init__(virtapi)
         self.containers = containers.Containers()
         self.hostops = hostops.HostOps()
+        self.volumes = volumes.VolumeOps()
 
     def init_host(self, host):
         if not lxc.version:
@@ -67,8 +71,9 @@ class LXCDriver(driver.ComputeDriver):
 
     def reboot(self, context, instance, network_info, reboot_type,
                block_device_info=None, bad_volumes_callback=None):
-        self.containers.reboot_container(context, instance, network_info, reboot_type, 
-                        block_device_info, bad_volumes_callback)
+        self.containers.reboot_container(context, instance, network_info,
+                                         reboot_type, block_device_info,
+                                         bad_volumes_callback)
 
     def rescue(self, context, instance, network_info, image_meta,
                rescue_password):
@@ -81,7 +86,8 @@ class LXCDriver(driver.ComputeDriver):
         self.containers.stop_container(instance)
 
     def power_on(self, context, instance, network_info, block_device_info):
-        self.containers.start_container(context, instance, network_info, block_device_info)
+        self.containers.start_container(context, instance, network_info,
+                                        block_device_info)
 
     def suspend(self, instance):
         pass
@@ -97,12 +103,15 @@ class LXCDriver(driver.ComputeDriver):
     def attach_volume(self, context, connection_info, instance, mountpoint,
                       disk_bus=None, device_type=None, encryption=None):
         """Attach the disk to the instance at mountpoint using info."""
-        pass
+        self.containers.attach_container_volume(context, connection_info,
+                                    instance, mountpoint,disk_bus, device_type,
+                                    encryption)
 
     def detach_volume(self, connection_info, instance, mountpoint,
                       encryption=None):
         """Detach the disk attached to the instance."""
-        pass
+        self.containers.detach_container_volume(connection_info, instance,
+                                                mountpoint)
 
     def attach_interface(self, instance, image_meta, vif):
         pass
@@ -132,3 +141,6 @@ class LXCDriver(driver.ComputeDriver):
 
     def get_host_stats(self, refresh=False):
         return self.hostops.get_host_stats(refresh)
+
+    def get_volume_connector(self, instance):
+        self.volumes.get_volume_connector(instance)
