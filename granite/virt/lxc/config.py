@@ -54,7 +54,6 @@ class LXCConfig(object):
             self.config_lxc_name()
             self.config_lxc_rootfs()
         #    self.config_lxc_console()
-            self.config_lxc_network()
             self.config_lxc_user()
             self.config_lxc_logging()
             self.container.save_config()
@@ -94,15 +93,6 @@ class LXCConfig(object):
 
     def config_lxc_console(self):
         self.container.append_config_item('lxc.console', container_utils.get_container_console(self.instance))
-
-    def config_lxc_network(self):
-        self.container.append_config_item('lxc.network.type', 'veth')
-        self.container.append_config_item('lxc.network.flags', 'up')
-
-        vif_info = self.vif_driver.plug(self.instance, self.network_info)
-
-        self.container.append_config_item('lxc.network.link', vif_info['bridge'])
-        self.container.append_config_item('lxc.network.hwaddr', vif_info['mac'])
 
     def config_lxc_logging(self):
         self.container.append_config_item('lxc.logfile', container_utils.get_container_logfile(self.instance))

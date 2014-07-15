@@ -69,7 +69,6 @@ class LXCDriver(driver.ComputeDriver):
                block_device_info=None, bad_volumes_callback=None):
         self.containers.reboot_container(context, instance, network_info, reboot_type, 
                         block_device_info, bad_volumes_callback)
-                    
 
     def rescue(self, context, instance, network_info, image_meta,
                rescue_password):
@@ -79,10 +78,10 @@ class LXCDriver(driver.ComputeDriver):
         pass
 
     def power_off(self, instance):
-        pass
+        self.containers.stop_container(instance)
 
     def power_on(self, context, instance, network_info, block_device_info):
-        pass
+        self.containers.start_container(context, instance, network_info, block_device_info)
 
     def suspend(self, instance):
         pass
