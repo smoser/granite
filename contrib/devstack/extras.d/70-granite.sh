@@ -1,6 +1,6 @@
 # granite.sh - Devstack extras script to install native lxc
 
-if [[ $VIRT_DRIVER == "docker" ]]; then
+if [[ $VIRT_DRIVER == "granite" ]]; then
 
 	if [[ $1 == "source" ]]; then
 
