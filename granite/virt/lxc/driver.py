@@ -27,7 +27,6 @@ import lxc
 
 from granite.virt.lxc import containers
 from granite.virt.lxc import hostops
-from granite.virt.lxc impot volumes
 
 from nova.compute import power_state
 from nova.compute import task_states
@@ -52,7 +51,6 @@ class LXCDriver(driver.ComputeDriver):
         super(LXCDriver, self).__init__(virtapi)
         self.containers = containers.Containers()
         self.hostops = hostops.HostOps()
-        self.volumes = volumes.VolumeOps()
 
     def init_host(self, host):
         if not lxc.version:

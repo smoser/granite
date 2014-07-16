@@ -53,7 +53,7 @@ lxc_opts = [
                help='Default vif driver'),
     cfg.StrOpt('volume_driver',
                 default='granite.virt.lxc.volumes.LXCISCSIDriver',
-                help='Default volume driver').
+                help='Default volume driver'),
 ]
 
 LOG = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class Containers(object):
     def __init__(self):
         self.instance_path = None
         self.container_rootfs = None
-        
+
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
 
