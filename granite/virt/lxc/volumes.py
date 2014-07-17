@@ -1,3 +1,5 @@
+import os
+
 from oslo.config import cfg
 
 from nova import context as nova_context
@@ -15,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 class VolumeOps(object):
     def __init__(self):
-        self.retries = CONF.lxc.num_iscsi_scan_tries
+        self.num_scan_tries = CONF.lxc.num_iscsi_scan_tries
 
     def _run_iscsiadm(self, iscsi_properties, iscsi_command, **kwargs):
         check_exit_code = kwargs.pop('check_exit_code', 0)
