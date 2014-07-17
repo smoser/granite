@@ -197,7 +197,7 @@ class Containers(object):
         if container.running:
             return container.init_pid
 
-    def get_conainer_root(self, instance):
+    def get_container_root(self, instance):
         container = lxc.Continer(instance['uuid'])
         container.set_config_path(CONF.instances_path)
         return container
