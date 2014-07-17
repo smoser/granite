@@ -53,7 +53,7 @@ class LXCConfig(object):
             self.container.load_config()
             self.config_lxc_name()
             self.config_lxc_rootfs()
-        #    self.config_lxc_console()
+            self.config_lxc_console()
             self.config_lxc_user()
             self.config_lxc_logging()
             self.container.save_config()

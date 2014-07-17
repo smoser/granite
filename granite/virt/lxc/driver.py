@@ -141,4 +141,8 @@ class LXCDriver(driver.ComputeDriver):
         return self.hostops.get_host_stats(refresh)
 
     def get_volume_connector(self, instance):
-        self.volumes.get_volume_connector(instance)
+    	return {
+            'ip': CONF.my_ip,
+            'initiator': volumeutils.get_iscsi_initiator(),
+            'host': CONF.host
+        }

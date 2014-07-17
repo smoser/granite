@@ -12,40 +12,14 @@ from nova.openstack.common import processutils
 from nova import utils
 from nova.virt import volumeutils
 
-CONF.import_opt('host', 'nova.netconf')
-CONF.import_opt('use_ipv6', 'nova.netconf')
+CONF = cfg.CONF
 
-class VolumeDriver(object):
-    def __init__(self, virtapi):
-        super(VolumeDriver, self).__init__()
-        self.virtapi = virtapi
-        self._initiator = None
 
-    def get_volume_connector(self, instance):
-        if not self._initiator:
-            self._initiator = volumeutils.get_iscsi_inititor()
-            if not self._initiator:
-                LOG.warn(_('Could not determine iscsi initiator name'),
-                           instance=instance)
+LOG = logging.getLogger(__name__)
 
-        return {
-            'ip': CONF.my_ip,
-            'initiator': self._initiator,
-            'host': CONF.host
-        }
+class VolumeOps(object):
+    def connect_volume(self, connection_info, instance, mountpoint):
+        LOG.debug(_('connecting volume')
 
-    def attach_volume(self, connection_info, instance, mountpoint):
-        raise NotImplementedError()
-
-    def detach_volume(self, connection_info, instance, mountpoint):
-        raise NotImplementedError()
-
-class LXCISCSIDriver(VolumeDriver):
-    def __init__(self, virtapi):
-        super(LXCISCSIDriver, self).__init__(virtapi)
-    
-    def attach_volume(self, connection_info, instance, mountpoint):
-        LOG.info(_('attach volume'))
-
-    def detach_volume(self, connection_info, instance, mountpoint):
-        LOG.info(_('detach volume'))
+    def disconnect_volume(self, connection_info, instance, mountpoint):
+	    LOG.debug('disconnecting volume')

@@ -23,6 +23,7 @@ from granite.virt.lxc import config
 from granite.virt.lxc import images
 from granite.virt.lxc import utils as container_utils
 from granite.virt.lxc import vifs
+from granite.virt.lxc import volumes
 
 from nova.openstack.common import fileutils
 from nova.openstack.common.gettextutils import _ # noqa
@@ -51,9 +52,6 @@ lxc_opts = [
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
                help='Default vif driver'),
-    cfg.StrOpt('volume_driver',
-                default='granite.virt.lxc.volumes.LXCISCSIDriver',
-                help='Default volume driver'),
 ]
 
 LOG = logging.getLogger(__name__)
@@ -70,7 +68,8 @@ class Containers(object):
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
 
-        self.volume_driver = importutils.import_class(CONF.lxc.volume_driver)
+	self.volumes = volumes.VolumeOps()
+
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info, block_device_info=None):
@@ -184,14 +183,11 @@ class Containers(object):
 
     def attach_container_volume(self, context, connection_info, instance, mountpoint,
                       disk_bus=None, device_type=None, encryption=None):
-        pass
+        self.volumes.connect_volume(connection_info, instance, mountpoint)
 
     def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
-        pass
+        self.volumes.disconnect_volume(connection_info, instance, mountpoint)
 
-    def get_volume_connector(self, instance):
-        return self.volume_driver.get_volume_connector(instance)
-        
     def container_exists(self, instance):
         container = lxc.Container(instance['uuid'])
         container.set_config_path(CONF.instances_path)
