@@ -57,11 +57,12 @@ def setup_container(instance, container_image):
 
     cwd = os.getcwd()
     try:
+        exclude = 'dev/*'
         os.chdir(container_rootfs)
         utils.execute('tar', '--anchored',
                       '--numeric-owner',
+                       '--exclude={0}' .format(exclude), 
                       '-xvpzf', base,
-                      run_as_root=True)
 #        os.mkdir('%s/dev/pts' % container_rootfs)
     finally:
         os.chdir(cwd)

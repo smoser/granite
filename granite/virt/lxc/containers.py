@@ -142,7 +142,7 @@ class Containers(object):
         container = self.get_container_root(instance)
         if container.start():
             LOG.info(_('Container started'))
-        
+
     def shutdown_container(self, instnace, network_info, block_device_info):
         LOG.debug('Shutdown container')
         container = self.get_container_root(instance)
@@ -198,6 +198,6 @@ class Containers(object):
             return container.init_pid
 
     def get_container_root(self, instance):
-        container = lxc.Continer(instance['uuid'])
+        container = lxc.Container(instance['uuid'])
         container.set_config_path(CONF.instances_path)
         return container
