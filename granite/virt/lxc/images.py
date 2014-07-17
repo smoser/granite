@@ -63,7 +63,7 @@ def setup_container(instance, container_image):
                       '--numeric-owner',
                        '--exclude={0}' .format(exclude),
                       '-xvpzf', base)
-#        os.mkdir('%s/dev/pts' % container_rootfs)
+        os.mkdir('%s/dev/pts' % container_rootfs)
     finally:
         os.chdir(cwd)
 

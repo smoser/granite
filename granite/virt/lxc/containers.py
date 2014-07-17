@@ -70,8 +70,7 @@ class Containers(object):
 
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
-
-	    self.volumes = volumes.VolumeOps()
+        self.volumes = volumes.VolumeOps()
 
 
     def spawn(self, context, instance, image_meta, injected_files,
