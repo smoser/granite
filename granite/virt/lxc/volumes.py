@@ -1,3 +1,4 @@
+import glob
 import os
 
 from oslo.config import cfg
@@ -86,13 +87,17 @@ class VolumeOps(object):
         device_prefix = ("/dev/disk/by-path/ip-%s-iscsi-%s-lun-" %
                          (iscsi_properties['target_portal'],
                           iscsi_properties['target_iqn']))
-        devices = self.connection._get_all_block_devices()
+        devices = self._get_all_block_devices()
         devices = [dev for dev in devices if dev.startswith(device_prefix)]
         if not devices:
             self._disconnect_from_iscsi_portal(iscsi_properties)
         elif host_device not in devices:
             # Delete device if LUN is not in use by another instance
             self._delete_device(host_device)
+
+    def _get_all_block_devices(self):
+        path = '/dev/disk/py-path'
+        return [os.path.join(path,fn) for fn in next(os.walk(path))[2]]
 
 
     def _connect_to_iscsi_portal(self, iscsi_properties):
