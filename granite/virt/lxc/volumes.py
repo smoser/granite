@@ -81,6 +81,18 @@ class VolumeOps(object):
                   'connection_info=%(connection_info)s',
                   {'instance': instance,
                    'connection_info': connection_info})
+        iscsi_properties = connection_info['data']
+        host_device = self._get_host_device(iscsi_properties)
+        device_prefix = ("/dev/disk/by-path/ip-%s-iscsi-%s-lun-" %
+                         (iscsi_properties['target_portal'],
+                          iscsi_properties['target_iqn']))
+        devices = self.connection._get_all_block_devices()
+        devices = [dev for dev in devices if dev.startswith(device_prefix)]
+        if not devices:
+            self._disconnect_from_iscsi_portal(iscsi_properties)
+        elif host_device not in devices:
+            # Delete device if LUN is not in use by another instance
+            self._delete_device(host_device)
 
 
     def _connect_to_iscsi_portal(self, iscsi_properties):
