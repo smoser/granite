@@ -15,6 +15,7 @@
 import os
 
 from oslo.config import cfg
+import re
 import lxc
 
 from granite.virt.lxc import host_utils as host_utils
@@ -27,6 +28,19 @@ from nova import utils
 CONF = cfg.CONF
 
 log = logging.getLogger(__name__)
+
+VERSION_RE = re.compile(r"(?P<maj>\d+)[.]?(?P<min>\d+)?"
+  "[.]?(?P<mic>\d+)?(?P<extra>.*)?")
+
+
+def parse_version(version):
+    try:
+        m = VERSION_RE.match(version)
+        ver_tup = tuple([int(m.group(n)) for n in ('maj', 'min', 'mic')])
+    except AttributeError:
+        logging.WARN("bad version: %s" % version)
+        ver_tup = (0,0,0)
+    return utils.convert_version_to_int(ver_tup)
 
 
 class HostOps(object):
@@ -52,7 +66,7 @@ class HostOps(object):
                'memory_mb_used': memory['used'],
                'local_gb_used': disk['used'] / units.Gi,
                'hypervisor_type': 'lxc',
-               'hypervisor_version': utils.convert_version_to_int(lxc.version),
+               'hypervisor_version': parse_version(lxc.version),
                'hypervisor_hostname': CONF.host,
                'cpu_info': '?',
                'supported_instances': jsonutils.dumps([
