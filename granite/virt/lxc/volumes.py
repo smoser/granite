@@ -96,9 +96,10 @@ class VolumeOps(object):
             self._delete_device(host_device)
 
     def _get_all_block_devices(self):
-        path = '/dev/disk/py-path'
-        return [os.path.join(path,fn) for fn in next(os.walk(path))[2]]
-
+        devices = []
+        for device in os.listdir('/dev/disk'):
+            devices.append('/dev/disk/by-path/%s' % device)
+        return devices
 
     def _connect_to_iscsi_portal(self, iscsi_properties):
         # NOTE(vish): If we are on the same host as nova volume, the
