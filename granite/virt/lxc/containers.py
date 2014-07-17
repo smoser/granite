@@ -71,7 +71,7 @@ class Containers(object):
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
 
-	self.volumes = volumes.VolumeOps()
+	    self.volumes = volumes.VolumeOps()
 
 
     def spawn(self, context, instance, image_meta, injected_files,
@@ -115,8 +115,7 @@ class Containers(object):
     def destroy_container(self, context, instance, network_info,
                           block_device_info, destroy_disks):
         LOG.debug('Destroying container')
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.running:
             container.stop()
             # segfault work around
@@ -126,46 +125,39 @@ class Containers(object):
     def reboot_container(self, context, instance, network_info, reboot_type, block_device_info,
                          bad_volumes_callback):
         LOG.debug('Rebooting container')
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.running:
             if container.reboot():
                 LOG.info(_('Container rebooted'))
 
     def stop_container(self, instance):
         LOG.debug('Stopping container')
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.running:
             if container.stop():
                 LOG.info(_('Container stopped'))
 
     def start_container(self, context, instance, network_info, block_device_info):
         LOG.debug('Starting container')
-        LOG.info(_('!!! %s') % instance['uuid'])
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.start():
             LOG.info(_('Container started'))
         
     def shutdown_container(self, instnace, network_info, block_device_info):
         LOG.debug('Shutdown container')
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.defined and container.controllable:
             container.shutdown()
 
     def suspend_container(self, instance):
         LOG.debug('Suspend container')
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.defined and container.controllable:
             container.freeze()
 
     def resume_container(self, context, instance, network_info, block_device_info):
         LOG.debug('Suspend container')
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.defined and container.controllable:
             container.unfreeze()
 
@@ -186,22 +178,26 @@ class Containers(object):
 
     def attach_container_volume(self, context, connection_info, instance, mountpoint,
                       disk_bus=None, device_type=None, encryption=None):
-        self.volumes.connect_volume(connection_info, instance, mountpoint)
+        host_device = self.volumes.connect_volume(connection_info, instance, mountpoint)
+        if host_device:
+            container.set_config_path(CONF.instances_path)
 
     def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
         self.volumes.disconnect_volume(connection_info, instance, mountpoint)
 
     def container_exists(self, instance):
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
-
+        container = self.get_container_root(instance)
         if container.running:
             return True
         else:
             return False
 
     def get_container_pid(self, instance):
-        container = lxc.Container(instance['uuid'])
-        container.set_config_path(CONF.instances_path)
+        container = self.get_container_root(instance)
         if container.running:
             return container.init_pid
+
+    def get_conainer_root(self, instance):
+        container = lxc.Continer(instance['uuid'])
+        container.set_config_path(CONF.instances_path)
+        return container
