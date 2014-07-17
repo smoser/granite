@@ -109,7 +109,7 @@ class LXCDriver(driver.ComputeDriver):
                       encryption=None):
         """Detach the disk attached to the instance."""
         self.containers.detach_container_volume(connection_info, instance,
-                                                mountpoint)
+                                                mountpoint, encryption)
 
     def attach_interface(self, instance, image_meta, vif):
         pass
