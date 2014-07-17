@@ -61,8 +61,8 @@ def setup_container(instance, container_image):
         os.chdir(container_rootfs)
         utils.execute('tar', '--anchored',
                       '--numeric-owner',
-                       '--exclude={0}' .format(exclude), 
-                      '-xvpzf', base,
+                       '--exclude={0}' .format(exclude),
+                      '-xvpzf', base)
 #        os.mkdir('%s/dev/pts' % container_rootfs)
     finally:
         os.chdir(cwd)
