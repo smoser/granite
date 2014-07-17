@@ -51,15 +51,14 @@ class VolumeOps(object):
         # The /dev/disk/by-path/... node is not always present immediately
         # TODO(justinsb): This retry-with-delay is a pattern, move to utils?
         tries = 0
-        disk_dev = disk_info['dev']
         while not os.path.exists(host_device):
             if tries >= self.num_scan_tries:
                 raise exception.NovaException(_("iSCSI device not found at %s")
                                               % (host_device))
 
-            LOG.warn(_LW("ISCSI volume not yet found at: %(disk_dev)s. "
+            LOG.warn(_LW("ISCSI volume not yet"
                          "Will rescan & retry.  Try number: %(tries)s"),
-                     {'disk_dev': disk_dev, 'tries': tries})
+                     {'tries': tries})
 
             # The rescan isn't documented as being necessary(?), but it helps
             self._run_iscsiadm(iscsi_properties, ("--rescan",))
@@ -69,10 +68,9 @@ class VolumeOps(object):
                 time.sleep(tries ** 2)
 
         if tries != 0:
-            LOG.debug("Found iSCSI node %(disk_dev)s "
+            LOG.debug("Found iSCSI node "
                       "(after %(tries)s rescans)",
-                      {'disk_dev': disk_dev,
-                       'tries': tries})
+                      {'tries': tries})
 
         return host_device
 
