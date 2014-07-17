@@ -52,6 +52,9 @@ lxc_opts = [
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
                help='Default vif driver'),
+    cfg.IntOpt('num_iscsi_scan_tries',
+               default=5,
+               help='Number of times to rescan iSCSI target to find volume'),
 ]
 
 LOG = logging.getLogger(__name__)
