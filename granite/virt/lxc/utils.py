@@ -33,6 +33,3 @@ def parse_idmap(map_string):
     mappings = []
     mappings = map_string.split(':')
     return mappings
-
-def chown_uid_mappings(uid_mapping, container_dir):
-    utils.execute('idmapshift', '-u', uid_mapping, container_dir, run_as_root=True)

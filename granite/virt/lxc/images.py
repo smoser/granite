@@ -57,15 +57,13 @@ def setup_container(instance, container_image):
 
     cwd = os.getcwd()
     try:
-        exclude = 'dev/*'
         os.chdir(container_rootfs)
-        utils.execute('tar', '--anchored',
-                      '--numeric-owner',
-                       '--exclude={0}' .format(exclude),
-                      '-xvpzf', base)
-        os.mkdir('%s/dev/pts' % container_rootfs)
+        utils.execute('lxc-usernsexec', '-m',
+                      'b:0:%s:%s' % (id_map[1],id_map[2]),
+                      '-m', 'b:200000:1000:1', '--',
+                      'tar', '--anchored', '--numeric-owner',
+                      '-xvpzf', base, check_exit_code=[2])
     finally:
         os.chdir(cwd)
-
-    container_utils.chown_uid_mappings(CONF.lxc.lxc_subuid,container_rootfs)
+        utils.execute('chown', id_map[1], container_rootfs, run_as_root=True)
 
