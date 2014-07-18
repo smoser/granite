@@ -53,7 +53,6 @@ class LXCConfig(object):
             self.container.load_config()
             self.config_lxc_name()
             self.config_lxc_rootfs()
-            self.config_lxc_console()
             self.config_lxc_user()
             self.config_lxc_logging()
             self.container.save_config()
@@ -90,9 +89,6 @@ class LXCConfig(object):
         container_rootfs = container_utils.get_container_rootfs(self.instance)
         if os.path.exists(container_rootfs):
             self.container.append_config_item('lxc.rootfs', container_rootfs)
-
-    def config_lxc_console(self):
-        self.container.append_config_item('lxc.console', container_utils.get_container_console(self.instance))
 
     def config_lxc_logging(self):
         self.container.append_config_item('lxc.logfile', container_utils.get_container_logfile(self.instance))
