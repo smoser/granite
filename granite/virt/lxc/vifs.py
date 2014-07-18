@@ -142,7 +142,14 @@ class LXCGenericDriver(object):
             self.unplug_ovs(instance, vif)
 
     def unplug_bridge(self, instance, vif):
-        pass
+        instance_name = instance['uuid']
+        if_remote_name = 'ns%s' % vif['id'][:11]
+
+        try:
+            utils.execute('ip', 'netns', 'exec', instance_name, 'ifconfig',
+                          if_remove_name, 'down', run_as_root=True)
+        except Exception:
+            LOG.exception('Failed to unconfigure the network')
 
     def unplug_ovs(self, instance, vif):
         try:

@@ -116,6 +116,8 @@ class Containers(object):
         LOG.debug('Destroying container')
         container = self.get_container_root(instance)
         if container.running:
+            for vif in network_info:
+                self.vif_driver.unplug(instance, vif)
             container.stop()
             # segfault work around
             utils.execute('lxc-destroy', '-n', instance['uuid'], '-P', 
@@ -145,7 +147,9 @@ class Containers(object):
     def shutdown_container(self, instnace, network_info, block_device_info):
         LOG.debug('Shutdown container')
         container = self.get_container_root(instance)
-        if container.defined and container.controllable:
+        if container.running:
+            for vif in network_info:
+                self.driver.unplug(instance, vif)
             container.shutdown()
 
     def suspend_container(self, instance):
@@ -169,8 +173,7 @@ class Containers(object):
         if container_pid:
             netns_path = os.path.join(netns_path, instance_name)
             utils.execute('ln', '-sf', '/proc/{0}/ns/net'.format(container_pid),
-                          '/var/run/netns/{0}'.format(instance_name),
-                          run_as_root=True)
+                          '/var/run/netns/{0}'.format(instance_name))
 
             for vif in network_info:
                 self.vif_driver.plug(instance, vif)
