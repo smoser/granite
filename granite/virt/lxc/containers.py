@@ -109,7 +109,6 @@ class Containers(object):
         if not container.running:
             if container.start():
                LOG.info(_('Container started'))
-        self.setup_network(instance, network_info)
 
     def destroy_container(self, context, instance, network_info,
                           block_device_info, destroy_disks):
@@ -163,20 +162,6 @@ class Containers(object):
         container = self.get_container_root(instance)
         if container.defined and container.controllable:
             container.unfreeze()
-
-    def setup_network(self, instance, network_info):
-        instance_name = instance['uuid']
-        netns_path = '/var/run/netns'
-        if not os.path.exists(netns_path):
-            utils.execute('mkdir', '-p', netns_path, run_as_root=True)
-        container_pid = self.get_container_pid(instance)
-        if container_pid:
-            netns_path = os.path.join(netns_path, instance_name)
-            utils.execute('ln', '-sf', '/proc/{0}/ns/net'.format(container_pid),
-                          '/var/run/netns/{0}'.format(instance_name))
-
-            for vif in network_info:
-                self.vif_driver.plug(instance, vif)
 
     def attach_container_volume(self, context, connection_info, instance, mountpoint,
                       disk_bus=None, device_type=None, encryption=None):
