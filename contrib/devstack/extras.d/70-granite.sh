@@ -25,8 +25,6 @@ if [[ $VIRT_DRIVER == "granite" ]]; then
 		if is_ubuntu; then
 			install_package --force-yes lxc lxc-dev
 
-			git clone https://github.com/lxc/python2-lxc && \
-				python setup.py build && python setup.py install
 		fi
 
 	fi
