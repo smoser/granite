@@ -20,12 +20,15 @@ if [[ $VIRT_DRIVER == "granite" ]]; then
 
     # Get our defaults
     source $TOP_DIR/lib/nova_plugins/hypervisor-granite
+	source $TOp_dir/lib/granite
 
 	elif [[ $2 == "install" ]] ; then
+		echo_summary "Configuring granite"
 		if is_ubuntu; then
 			install_package --force-yes lxc lxc-dev
 
 		fi
+		install_granite
 
 	fi
 

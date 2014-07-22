@@ -13,7 +13,7 @@ set +o xtrace
 
 GRANITE_DIR=$DEST/granite
 
-LXC_REPO=${LXC_REPO:-${GIT_BASE}/lxc/python-lxc2}
+LXC_REPO=${LXC_REPO:-${GIT_BASE}/lxc/python2-lxc}
 LXC_DIR=$DEST/python2-lxc
 
 function install_granite {
