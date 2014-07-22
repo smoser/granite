@@ -166,7 +166,21 @@ class Containers(object):
                       disk_bus=None, device_type=None, encryption=None):
         host_device = self.volumes.connect_volume(connection_info, instance, mountpoint)
         if host_device:
-            container.set_config_path(CONF.instances_path)
+		container = self.get_container_root(instance)
+		if container.running:
+			path_stat = os.stat(host_device)
+			mode = stat.S_IMODE(path_stat.st_mode)
+			
+			container.set_cgroup_item("devices.allow",
+						  "b %s:%s rwm" %
+						  (int(path_stat.st_rdev / 256),
+					          int(path_stat.st_rdev % 256)))
+
+			# Create the target
+			target = '%s%s' % (container_utils.get_container_rootfs(instance),
+					   mountpoint)
+			utils.execute('mknod', 'b' int(path_stat.st_rdev / 256), int(path_stat.st_rdev % 256),
+				      target, run_as_root=True)
 
     def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
         self.volumes.disconnect_volume(connection_info, instance, mountpoint)
