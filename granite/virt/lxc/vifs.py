@@ -26,18 +26,90 @@ from nova import utils
 LOG = logging.getLogger(__name__)
 
 class LXCGenericDriver(object):
-    def plug(self, instance, vif):
-        vif_info = {}
-        if not vif:
-            return vif_info
+    def plug(self, container, instance, vif):
+        vif_type = vif['type']
 
-        for vifs in vif:
-            mac_address = vifs['address']
-            network_bridge = vifs['network']['bridge']
+        LOG.debug('vif_type=%(vif_type)s instance=%(instance)s '
+                  'vif=%(vif)s',                                          
+                  {'vif_type': vif_type, 'instance': instance,
+                  'vif': vif})
 
-        vif_info['bridge'] = network_bridge
-        vif_info['mac'] = mac_address
-        return vif_info
+        if vif_type is None:
+            raise exception.NovaException(
+                    _("vif_type parameter must be present "
+                     "for this vif_driver implementation"))
+
+        if vif_type == network_model.VIF_TYPE_BRIDGE:
+            self.plug_bridge(container, instance, vif)
+        elif vif_type == network_model.VIF_TYPE_OVS:
+            self.plug_ovs(container, instance, vif)
+        else:
+            raise exception.NovaException(
+                _("Unexpected vif_type=%s") % vif_type)
+
+    def plug_ovs(self, container, instance, vif):
+        iface_id = self._get_ovs_interfaceid(vif)
+        dev = self._get_vif_devname(vif)
+        linux_net.create_tap_dev(dev)
+        linux_net.create_ovs_vif_port(self._get_vif_bridge(vif),
+                             dev, iface_id, vif['address'],
+                             instance['uuid'])
+
+
+        self.setup_lxc_network(container, instance, vif)
+
+    def plug_bridge(self, container, instance, vif):
+        self.setup_lxc_network(container, instance, vif)
+
+    def setup_lxc_network(self, container, instance, vif):
+        container.load_config()
+
+        container.append_config_item('lxc.network.type', 'veth')
+        container.append_config_item('lxc.network.flags', 'up')
+
+        container.append_config_item('lxc.network.link', self._get_vif_bridge(vif))
+        container.append_config_item('lxc.network.hwaddr', vif['address'])
+
+        container.save_config()
+
+    def _get_ovs_interfaceid(self, vif):
+        return vif.get('ovs_interfaceid') or vif['id']
+
+    def _get_vif_devname(self, vif):
+        if 'devname' in vif:
+            return vif['devname']
+        return ("nic" + vif['id'])[:network_model.NIC_NAME_LEN]
+
+    def _get_vif_bridge(self, vif):
+        return vif['network']['bridge']
+
+    def unplug(self, instance, vif):
+        vif_type = vif['type']
+
+        LOG.debug('vif_type=%(vif_type)s instance=%(instance)s '
+                  'vif=%(vif)s',
+                  {'vif_type': vif_type, 'instance': instance,
+                   'vif': vif})
+                                                                      
+        if vif_type is None:
+            raise exception.NovaException(
+                _("vif_type parameter must be present "
+                  "for this vif_driver implementation"))
+
+        if vif_type == network_model.VIF_TYPE_BRIDGE:            
+            self.unplug_bridge(instance, vif)
+        elif vif_type == network_model.VIF_TYPE_OVS:                              
+            self.unplug_ovs(instance, vif)
+        else:
+            raise exception.NovaException(
+                _("Unexpected vif_type=%s") % vif_type)
+
+    def unplug_bridge(self, instance, vif):
+        pass
+
+    def unplug_ovs(self, instance, vif):
+        pass
+
 
     def unplug(self, instance, vif):
         pass

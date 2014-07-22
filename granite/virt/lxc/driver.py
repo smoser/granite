@@ -59,6 +59,12 @@ class LXCDriver(driver.ComputeDriver):
     def list_instances(self):
         return lxc.list_containers(config_path=CONF.instances_path)
 
+    def plug_vif(self, instance, vif):
+        self.containers.setup_network(instance, vif)
+
+    def unplug_vif(self, instance, vif):
+        self.container.teardow_network(instance, vif)
+
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info=None, block_device_info=None):
         self.containers.spawn(context, instance, image_meta, injected_files,

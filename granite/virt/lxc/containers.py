@@ -104,6 +104,7 @@ class Containers(object):
         cfg.get_config()
 
         images.setup_container(instance, container_image)
+        self.setup_network(instance, network_info)
 
         # Startint the container
         if not container.running:
@@ -115,8 +116,6 @@ class Containers(object):
         LOG.debug('Destroying container')
         container = self.get_container_root(instance)
         if container.running:
-            for vif in network_info:
-                self.vif_driver.unplug(instance, vif)
             container.stop()
             # segfault work around
             utils.execute('lxc-destroy', '-n', instance['uuid'], '-P', 
@@ -171,6 +170,14 @@ class Containers(object):
 
     def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
         self.volumes.disconnect_volume(connection_info, instance, mountpoint)
+
+    def setup_network(self, instance, network_info):
+        container = self.get_container_root(instance)
+        for vif in network_info:
+            self.vif_driver.plug(container, instance, vif)
+    
+    def teardown_network(self, instance, network_info):
+        self.vif_driver.unplug(instance, network_info)
 
     def container_exists(self, instance):
         container = self.get_container_root(instance)
