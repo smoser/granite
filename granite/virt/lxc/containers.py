@@ -179,7 +179,7 @@ class Containers(object):
 			# Create the target
 			target = '%s%s' % (container_utils.get_container_rootfs(instance),
 					   mountpoint)
-			utils.execute('mknod', 'b' int(path_stat.st_rdev / 256), int(path_stat.st_rdev % 256),
+			utils.execute('mknod', 'b', int(path_stat.st_rdev / 256), int(path_stat.st_rdev % 256),
 				      target, run_as_root=True)
 
     def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
