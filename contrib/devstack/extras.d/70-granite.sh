@@ -22,7 +22,10 @@ if [[ $VIRT_DRIVER == "granite" ]]; then
 	   elif [[ $2 == "install" ]] ; then
 		  echo_summary "Configuring granite"
 		  if is_ubuntu; then
-		  	  install_package --force-yes lxc lxc-dev
+              install_package python-software-properties
+              sudo add-apt-repository -y ppa:ubuntu-lxc/daily
+              apt_get update
+			  install_package --force-yes lxc lxc-dev
 
 		  fi
 		  install_granite
