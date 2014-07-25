@@ -1,20 +1,32 @@
-import glob
+# Copyright (c) 2014 Canonical Ltd
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 import os
+import time
 
 from oslo.config import cfg
 
-from nova import context as nova_context
 from nova import exception
-from nova import network
 from nova.openstack.common.gettextutils import _
-from nova.openstack.common import importutils
 from nova.openstack.common import log as logging
 from nova.openstack.common import processutils
 from nova import utils
-from nova.virt import volumeutils
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+
 
 class VolumeOps(object):
     def __init__(self):
@@ -59,8 +71,8 @@ class VolumeOps(object):
                 raise exception.NovaException(_("iSCSI device not found at %s")
                                               % (host_device))
 
-            LOG.warn(_LW("ISCSI volume not yet"
-                         "Will rescan & retry.  Try number: %(tries)s"),
+            LOG.warn(_("ISCSI volume not yet"
+                       "Will rescan & retry.  Try number: %(tries)s"),
                      {'tries': tries})
 
             # The rescan isn't documented as being necessary(?), but it helps
@@ -214,4 +226,3 @@ class VolumeOps(object):
 
     def _reconnect(self, iscsi_properties):
         self._run_iscsiadm(iscsi_properties, ('--op', 'new'))
-
