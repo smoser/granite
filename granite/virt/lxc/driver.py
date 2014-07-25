@@ -20,24 +20,15 @@ native-lxc driver
 
 """
 
-import contextlib
-
-from oslo.config import cfg
 import lxc
+from oslo.config import cfg
 
 from granite.virt.lxc import containers
 from granite.virt.lxc import hostops
 
 from nova.compute import power_state
-from nova.compute import task_states
-from nova import db
-from nova import exception
-from nova.openstack.common.gettextutils import _
-from nova.openstack.common import jsonutils
 from nova.openstack.common import log as logging
-from nova import utils
 from nova.virt import driver
-from nova.virt import virtapi
 from nova.virt import volumeutils
 
 CONF = cfg.CONF
@@ -45,6 +36,7 @@ CONF.import_opt('host', 'nova.netconf')
 CONF.import_opt('my_ip', 'nova.netconf')
 
 LOG = logging.getLogger(__name__)
+
 
 class LXCDriver(driver.ComputeDriver):
     def __init__(self, virtapi, read_only=False):
@@ -108,8 +100,9 @@ class LXCDriver(driver.ComputeDriver):
                       disk_bus=None, device_type=None, encryption=None):
         """Attach the disk to the instance at mountpoint using info."""
         self.containers.attach_container_volume(context, connection_info,
-                                    instance, mountpoint,disk_bus, device_type,
-                                    encryption)
+                                                instance, mountpoint,
+                                                disk_bus, device_type,
+                                                encryption)
 
     def detach_volume(self, connection_info, instance, mountpoint,
                       encryption=None):
@@ -147,7 +140,7 @@ class LXCDriver(driver.ComputeDriver):
         return self.hostops.get_host_stats(refresh)
 
     def get_volume_connector(self, instance):
-    	return {
+        return {
             'ip': CONF.my_ip,
             'initiator': volumeutils.get_iscsi_initiator(),
             'host': CONF.host

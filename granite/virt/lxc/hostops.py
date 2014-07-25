@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
+import re
 
 from oslo.config import cfg
-import re
+
 import lxc
 
 from granite.virt.lxc import host_utils as host_utils
@@ -30,7 +30,7 @@ CONF = cfg.CONF
 log = logging.getLogger(__name__)
 
 VERSION_RE = re.compile(r"(?P<maj>\d+)[.]?(?P<min>\d+)?"
-  "[.]?(?P<mic>\d+)?(?P<extra>.*)?")
+                        "[.]?(?P<mic>\d+)?(?P<extra>.*)?")
 
 
 def parse_version(version):
@@ -39,7 +39,7 @@ def parse_version(version):
         ver_tup = tuple([int(m.group(n)) for n in ('maj', 'min', 'mic')])
     except AttributeError:
         logging.WARN("bad version: %s" % version)
-        ver_tup = (0,0,0)
+        ver_tup = (0, 0, 0)
     return utils.convert_version_to_int(ver_tup)
 
 
@@ -72,7 +72,7 @@ class HostOps(object):
                'supported_instances': jsonutils.dumps([
                                       ('i686', 'lxc', 'lxc'),
                                       ('x86_64', 'lxc', 'lxc'),
-                                      ])}
+                                    ])}
 
         self._stats = dic
         return self._stats

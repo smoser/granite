@@ -14,30 +14,28 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from granite.virt.lxc import network
 from nova import exception
 from nova.network import linux_net
 from nova.network import model as network_model
 from nova.openstack.common.gettextutils import _
 from nova.openstack.common import log as logging
-from nova.openstack.common import processutils
-from nova import utils
 
 LOG = logging.getLogger(__name__)
+
 
 class LXCGenericDriver(object):
     def plug(self, container, instance, vif):
         vif_type = vif['type']
 
         LOG.debug('vif_type=%(vif_type)s instance=%(instance)s '
-                  'vif=%(vif)s',                                          
+                  'vif=%(vif)s',
                   {'vif_type': vif_type, 'instance': instance,
                   'vif': vif})
 
         if vif_type is None:
             raise exception.NovaException(
-                    _("vif_type parameter must be present "
-                     "for this vif_driver implementation"))
+                _("vif_type parameter must be present "
+                  "for this vif_driver implementation"))
 
         if vif_type == network_model.VIF_TYPE_BRIDGE:
             self.plug_bridge(container, instance, vif)
@@ -52,9 +50,8 @@ class LXCGenericDriver(object):
         dev = self._get_vif_devname(vif)
         linux_net.create_tap_dev(dev)
         linux_net.create_ovs_vif_port(self._get_vif_bridge(vif),
-                             dev, iface_id, vif['address'],
-                             instance['uuid'])
-
+                                      dev, iface_id, vif['address'],
+                                      instance['uuid'])
 
         self.setup_lxc_network(container, instance, vif)
 
@@ -67,7 +64,8 @@ class LXCGenericDriver(object):
         container.append_config_item('lxc.network.type', 'veth')
         container.append_config_item('lxc.network.flags', 'up')
 
-        container.append_config_item('lxc.network.link', self._get_vif_bridge(vif))
+        container.append_config_item('lxc.network.link',
+                                     self._get_vif_bridge(vif))
         container.append_config_item('lxc.network.hwaddr', vif['address'])
 
         container.save_config()
@@ -90,15 +88,15 @@ class LXCGenericDriver(object):
                   'vif=%(vif)s',
                   {'vif_type': vif_type, 'instance': instance,
                    'vif': vif})
-                                                                      
+
         if vif_type is None:
             raise exception.NovaException(
                 _("vif_type parameter must be present "
                   "for this vif_driver implementation"))
 
-        if vif_type == network_model.VIF_TYPE_BRIDGE:            
+        if vif_type == network_model.VIF_TYPE_BRIDGE:
             self.unplug_bridge(instance, vif)
-        elif vif_type == network_model.VIF_TYPE_OVS:                              
+        elif vif_type == network_model.VIF_TYPE_OVS:
             self.unplug_ovs(instance, vif)
         else:
             raise exception.NovaException(
@@ -108,8 +106,4 @@ class LXCGenericDriver(object):
         pass
 
     def unplug_ovs(self, instance, vif):
-        pass
-
-
-    def unplug(self, instance, vif):
         pass

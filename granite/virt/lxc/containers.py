@@ -13,7 +13,6 @@
 #    under the License.
 
 import os
-import shutil
 
 import lxc
 
@@ -22,16 +21,12 @@ from oslo.config import cfg
 from granite.virt.lxc import config
 from granite.virt.lxc import images
 from granite.virt.lxc import utils as container_utils
-from granite.virt.lxc import vifs
 from granite.virt.lxc import volumes
 
-from nova.openstack.common import fileutils
-from nova.openstack.common.gettextutils import _ # noqa
+from nova.openstack.common.gettextutils import _  # noqa
 from nova.openstack.common import importutils
 from nova.openstack.common import log as logging
-from nova import exception
 from nova import utils
-from nova.virt.disk import api as disk
 
 lxc_opts = [
     cfg.StrOpt('lxc_default_template',
@@ -41,14 +36,14 @@ lxc_opts = [
                default='/usr/share/lxc/templates',
                help='Default template directory'),
     cfg.StrOpt('lxc_config_dir',
-                default='/usr/share/lxc/config',
-                help='Default lxc config dir'),
+               default='/usr/share/lxc/config',
+               help='Default lxc config dir'),
     cfg.StrOpt('lxc_subuid',
-                default='1000:100000:65536',
-                help='Default lxc sub uid'),
+               default='1000:100000:65536',
+               help='Default lxc sub uid'),
     cfg.StrOpt('lxc_subgid',
-                default='1000:100000:65536',
-                help='Default lxc sub gid'),
+               default='1000:100000:65536',
+               help='Default lxc sub gid'),
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
                help='Default vif driver'),
@@ -60,8 +55,8 @@ lxc_opts = [
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
-CONF.import_opt('use_cow_images', 'nova.virt.driver')
 CONF.register_opts(lxc_opts, 'lxc')
+
 
 class Containers(object):
     def __init__(self):
@@ -72,17 +67,8 @@ class Containers(object):
         self.vif_driver = vif_class()
         self.volumes = volumes.VolumeOps()
 
-
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info, block_device_info=None):
-        """ Creates a LXC container instance
-            Steps that are followed:
-
-        1. Create a container
-        2. Fetches the image from glance
-        3. Untars the image from glance
-        4. Start the container
-        """
         LOG.debug('Spawning containers')
 
         # Check for a vlid image:
@@ -109,7 +95,7 @@ class Containers(object):
         # Startint the container
         if not container.running:
             if container.start():
-               LOG.info(_('Container started'))
+                LOG.info(_('Container started'))
 
     def destroy_container(self, context, instance, network_info,
                           block_device_info, destroy_disks):
@@ -117,12 +103,9 @@ class Containers(object):
         container = self.get_container_root(instance)
         if container.running:
             container.stop()
-            # segfault work around
-            utils.execute('lxc-destroy', '-n', instance['uuid'], '-P', 
-                            CONF.instances_path)
 
-    def reboot_container(self, context, instance, network_info, reboot_type, block_device_info,
-                         bad_volumes_callback):
+    def reboot_container(self, context, instance, network_info, reboot_type,
+                         block_device_info, bad_volumes_callback):
         LOG.debug('Rebooting container')
         container = self.get_container_root(instance)
         if container.running:
@@ -136,13 +119,14 @@ class Containers(object):
             if container.stop():
                 LOG.info(_('Container stopped'))
 
-    def start_container(self, context, instance, network_info, block_device_info):
+    def start_container(self, context, instance, network_info,
+                        block_device_info):
         LOG.debug('Starting container')
         container = self.get_container_root(instance)
         if container.start():
             LOG.info(_('Container started'))
 
-    def shutdown_container(self, instnace, network_info, block_device_info):
+    def shutdown_container(self, instance, network_info, block_device_info):
         LOG.debug('Shutdown container')
         container = self.get_container_root(instance)
         if container.running:
@@ -156,40 +140,44 @@ class Containers(object):
         if container.defined and container.controllable:
             container.freeze()
 
-    def resume_container(self, context, instance, network_info, block_device_info):
+    def resume_container(self, context, instance, network_info,
+                         block_device_info):
         LOG.debug('Suspend container')
         container = self.get_container_root(instance)
         if container.defined and container.controllable:
             container.unfreeze()
 
-    def attach_container_volume(self, context, connection_info, instance, mountpoint,
-                      disk_bus=None, device_type=None, encryption=None):
-        host_device = self.volumes.connect_volume(connection_info, instance, mountpoint)
+    def attach_container_volume(self, context, connection_info, instance,
+                                mountpoint, disk_bus=None, device_type=None,
+                                encryption=None):
+        host_device = self.volumes.connect_volume(connection_info, instance,
+                                                  mountpoint)
         if host_device:
-		container = self.get_container_root(instance)
-		if container.running:
-			path_stat = os.stat(host_device)
-			mode = stat.S_IMODE(path_stat.st_mode)
-			
-			container.set_cgroup_item("devices.allow",
-						  "b %s:%s rwm" %
-						  (int(path_stat.st_rdev / 256),
-					          int(path_stat.st_rdev % 256)))
+            container = self.get_container_root(instance)
+            if container.running:
+                path_stat = os.stat(host_device)
 
-			# Create the target
-			target = '%s%s' % (container_utils.get_container_rootfs(instance),
-					   mountpoint)
-			utils.execute('mknod', 'b', int(path_stat.st_rdev / 256), int(path_stat.st_rdev % 256),
-				      target, run_as_root=True)
+                container.set_cgroup_item("devices.allow",
+                                          "b %s:%s rwm"
+                                          % (int(path_stat.st_rdev / 256),
+                                             int(path_stat.st_rdev % 256)))
 
-    def detach_container_volume(self,  connection_info, instance, mountpoint, encryption):
+                # Create the target
+                target = '%s%s' % (container_utils.get_container_rootfs(
+                                          instance), mountpoint)
+                utils.execute('mknod', 'b', int(path_stat.st_rdev / 256),
+                              int(path_stat.st_rdev % 256),
+                              target, run_as_root=True)
+
+    def detach_container_volume(self, connection_info, instance, mountpoint,
+                                encryption):
         self.volumes.disconnect_volume(connection_info, instance, mountpoint)
 
     def setup_network(self, instance, network_info):
         container = self.get_container_root(instance)
         for vif in network_info:
             self.vif_driver.plug(container, instance, vif)
-    
+
     def teardown_network(self, instance, network_info):
         self.vif_driver.unplug(instance, network_info)
 

@@ -15,13 +15,10 @@
 import os
 
 from oslo.config import cfg
-import lxc
 import psutil
 
 from nova.openstack.common.gettextutils import _   # noqa
-from nova.openstack.common import jsonutils
 from nova.openstack.common import log as logging
-from nova import utils
 
 CONF = cfg.CONF
 
@@ -33,10 +30,10 @@ def get_memory_info():
     for line in out:
         if 'MemTotal:' == line.split()[0]:
             split = line.split()
-            total  = float(split[1])
+            total = float(split[1])
         if 'MemFree:' == line.split()[0]:
             split = line.split()
-            free  = float(split[1])
+            free = float(split[1])
         if 'Buffers:' == line.split()[0]:
             split = line.split()
             buffers = float(split[1])
@@ -44,9 +41,10 @@ def get_memory_info():
             split = line.split()
             cached = float(split[1])
     used = (total - (free + buffers + cached))
-    return {'total': int(total/1024),
-            'free': int(free/1024),
-            'used': int(used/1024)}
+    return {'total': int(total / 1024),
+            'free': int(free / 1024),
+            'used': int(used / 1024)}
+
 
 def get_disk_info():
     hddinfo = os.statvfs(CONF.instances_path)
@@ -54,6 +52,7 @@ def get_disk_info():
     free = hddinfo.f_frsize * hddinfo.f_bavail
     used = hddinfo.f_frsize * (hddinfo.f_blocks - hddinfo.f_bfree)
     return {'total': total, 'free': free, 'used': used}
+
 
 def get_cpu_count():
     try:

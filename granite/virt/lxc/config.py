@@ -14,8 +14,6 @@
 
 import os
 
-import lxc
-
 from oslo.config import cfg
 
 from granite.virt.lxc import utils as container_utils
@@ -26,12 +24,11 @@ from nova.openstack.common import importutils
 from nova.openstack.common import log as logging
 from nova import exception
 from nova import utils
-from nova.virt.disk import api as disk
-from nova.virt import images
 
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
+
 
 class LXCConfig(object):
     def __init__(self, container, instance, image_meta, network_info):
@@ -76,14 +73,15 @@ class LXCConfig(object):
         config_file = container_utils.get_container_config(self.instance)
         f = open(config_file, 'w')
         f.write('lxc.include = %s/%s.common.conf\n' % (CONF.lxc.lxc_config_dir,
-                                                     template_name))
+                                                       template_name))
         f.write('lxc.include = %s/%s.userns.conf\n' % (CONF.lxc.lxc_config_dir,
-                                                     template_name))
+                                                       template_name))
         f.close()
 
     def config_lxc_name(self):
         if self.instance:
-            self.container.append_config_item('lxc.utsname', self.instance['uuid'])
+            self.container.append_config_item('lxc.utsname',
+                                              self.instance['uuid'])
 
     def config_lxc_rootfs(self):
         container_rootfs = container_utils.get_container_rootfs(self.instance)
@@ -91,9 +89,12 @@ class LXCConfig(object):
             self.container.append_config_item('lxc.rootfs', container_rootfs)
 
     def config_lxc_logging(self):
-        self.container.append_config_item('lxc.logfile', container_utils.get_container_logfile(self.instance))
+        self.container.append_config_item('lxc.logfile',
+                        container_utils.get_container_logfile(self.instance))
 
     def config_lxc_user(self):
         id_map = container_utils.parse_idmap(CONF.lxc.lxc_subuid)
-        self.container.append_config_item('lxc.id_map', 'u 0 %s %s' % (id_map[1], id_map[2]))
-        self.container.append_config_item('lxc.id_map', 'g 0 %s %s' % (id_map[1], id_map[2]))
+        self.container.append_config_item('lxc.id_map', 'u 0 %s %s'
+                                          % (id_map[1], id_map[2]))
+        self.container.append_config_item('lxc.id_map', 'g 0 %s %s'
+                                          % (id_map[1], id_map[2]))
