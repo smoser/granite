@@ -2,7 +2,7 @@
 granite
 ===============================
 
-native lxc for openstack
+Unprivileged native lxc containers for openstack
 
 * Free software: Apache license
 * Documentation: http://docs.openstack.org/developer/granite
