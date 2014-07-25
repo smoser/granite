@@ -6,6 +6,7 @@ fixtures>=0.3.14
 python-subunit
 sphinx>=1.1.2
 mox3
+mock>=1.0
 oslosphinx
 testrepository>=0.0.17
 testscenarios>=0.4,<0.5
