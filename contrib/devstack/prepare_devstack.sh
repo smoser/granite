@@ -4,7 +4,7 @@ set -xe
 
 env
 
-NOVAGRANITEDIR=$(realpath $(dirname $0)/../..)
+NOVAGRANITEDIR=$(readlink -f $(dirname $0)/../..)
 INSTALLDIR=${INSTALLDIR:-/opt/stack}
 
 cp $NOVAGRANITEDIR/contrib/devstack/extras.d/70-granite.sh $INSTALLDIR/devstack/extras.d

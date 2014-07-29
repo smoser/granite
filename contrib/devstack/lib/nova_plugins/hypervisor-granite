@@ -36,6 +36,7 @@ function cleanup_nova_hypervisor {
 function configure_nova_hypervisor {
     iniset $NOVA_CONF DEFAULT compute_driver granite.virt.lxc.LXCDriver
     iniset $GLANCE_API_CONF DEFAULT container_formats ami,ari,aki,bare,ovf,root-tar
+    iniset $GLANCE_API_CONF DEFAULT disk_formats ami,ari,aki,bare,ovf,root-tar
 }
 
 # install_nova_hypervisor() - Install external components
