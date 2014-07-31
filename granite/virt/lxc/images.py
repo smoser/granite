@@ -59,25 +59,20 @@ def create_container(instance):
         fileutils.ensure_tree(container_rootfs)
 
 
-def setup_container(instance, container_image):
+def setup_container(instance, container_image, idmap):
     """Setup the LXC container."""
     LOG.debug('Creating LXC container')
-    id_map = []
     base_dir = os.path.join(CONF.instances_path,
                             CONF.image_cache_subdirectory_name)
     base = os.path.join(base_dir, container_image)
-    id_map = container_utils.parse_idmap(CONF.lxc.lxc_subuid)
 
     container_rootfs = container_utils.get_container_rootfs(instance)
 
-    cwd = os.getcwd()
-    try:
-        os.chdir(container_rootfs)
-        utils.execute('lxc-usernsexec', '-m',
-                      'b:0:%s:%s' % (id_map[1], id_map[2]),
-                      '-m', 'b:200000:1000:1', '--',
-                      'tar', '--anchored', '--numeric-owner',
-                      '-xvpzf', base, check_exit_code=[2])
-    finally:
-        os.chdir(cwd)
-        utils.execute('chown', id_map[1], container_rootfs, run_as_root=True)
+    tar = ['tar', '--directory', container_rootfs,
+           '--anchored', '--numeric-owner', '-xpzf', base]
+    nsexec = (['lxc-usernsexec'] + idmap.usernsexec_margs(with_read="user") +
+              ['--'])
+    args = tuple(nsexec + tar)
+
+    utils.execute(*args, check_exit_code=[0, 2])
+    utils.execute(*tuple(nsexec + ['chown', '0:0', container_rootfs]))

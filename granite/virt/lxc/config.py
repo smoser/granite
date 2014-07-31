@@ -31,11 +31,12 @@ CONF = cfg.CONF
 
 
 class LXCConfig(object):
-    def __init__(self, container, instance, image_meta, network_info):
+    def __init__(self, container, instance, image_meta, network_info, idmap):
         self.container = container
         self.instance = instance
         self.image_meta = image_meta
         self.network_info = network_info
+        self.idmap = idmap
 
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
@@ -93,8 +94,5 @@ class LXCConfig(object):
                         container_utils.get_container_logfile(self.instance))
 
     def config_lxc_user(self):
-        id_map = container_utils.parse_idmap(CONF.lxc.lxc_subuid)
-        self.container.append_config_item('lxc.id_map', 'u 0 %s %s'
-                                          % (id_map[1], id_map[2]))
-        self.container.append_config_item('lxc.id_map', 'g 0 %s %s'
-                                          % (id_map[1], id_map[2]))
+        for ent in self.idmap.lxc_conf_lines():
+            self.container.append_config_item(*ent)

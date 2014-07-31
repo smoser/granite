@@ -38,12 +38,6 @@ lxc_opts = [
     cfg.StrOpt('lxc_config_dir',
                default='/usr/share/lxc/config',
                help='Default lxc config dir'),
-    cfg.StrOpt('lxc_subuid',
-               default='1000:100000:65536',
-               help='Default lxc sub uid'),
-    cfg.StrOpt('lxc_subgid',
-               default='1000:100000:65536',
-               help='Default lxc sub gid'),
     cfg.StrOpt('vif_driver',
                default='granite.virt.lxc.vifs.LXCGenericDriver',
                help='Default vif driver'),
@@ -66,6 +60,7 @@ class Containers(object):
         vif_class = importutils.import_class(CONF.lxc.vif_driver)
         self.vif_driver = vif_class()
         self.volumes = volumes.VolumeOps()
+        self.idmap = container_utils.LXCUserIdMap()
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info, block_device_info=None):
@@ -86,10 +81,11 @@ class Containers(object):
         images.create_container(instance)
 
         # Write the LXC confgiuration file
-        cfg = config.LXCConfig(container, instance, image_meta, network_info)
+        cfg = config.LXCConfig(container, instance, image_meta, network_info,
+                               self.idmap)
         cfg.get_config()
 
-        images.setup_container(instance, container_image)
+        images.setup_container(instance, container_image, self.idmap)
         self.setup_network(instance, network_info)
 
         # Startint the container
